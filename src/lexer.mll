@@ -1,27 +1,18 @@
 {
   open Parser
 
-  let check_numpy_func =
+  module S = Set.Make(String)
 
-    let module S = Set.Make(String) in
+  let rec read chan s =
+    match input_line chan with
+    | line -> read chan (S.add line s)
+    | exception End_of_file -> close_in chan; s
 
-    let rec read chan set =
-      try
-        let s = S.add (input_line chan) set in
-        read chan s
-      with End_of_file -> set
-    in
+  let in_channel = open_in Sys.argv.(1)
 
-    let in_channel = open_in Sys.argv.(1) in
+  let s = read in_channel S.empty
 
-    try
-      let m = read in_channel S.empty in
-      close_in in_channel;
-      fun fn -> S.mem fn m
-    with e -> (
-      close_in_noerr in_channel;
-      raise e
-    )
+  let check_numpy_func fn = S.mem fn s
 
   let fail s =
     failwith (Printf.sprintf "Unexpected token: %s" s)
